@@ -5,23 +5,23 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    //move up and down to grid points (both arrow keys and WS keys)
-    //Player fires a bullet
-    //when player fires a bullet, generate explosion on the barrel
-    //gun firing delay
-    public float moveSpeed = 5f;
-    public float boundaryY = 3.5f;
+    // Move up and down (both arrow keys and WS keys)
+    // Player fires a bullet
+    // When player fires a bullet, generate explosion on the barrel
+    // Gun firing delay
+    public float moveSpeed = 5f; // Speed the player moves
+    public float boundaryY = 4.5f; // Vertical boundary offset from the center
+    public float boundaryYCenter = 0f; // Center of the vertical boundary
     public GameObject bulletPrefab;
     public Transform firePoint;
-    public GameObject explosionPrefab; // Add an explosion prefab
+    public GameObject explosionPrefab;
     public float bulletForce = 10f;
     public float fireRate = 0.2f;
     private float nextFireTime = 0f;
-    public Transform[] lanePoints; // Array to store the lane positions
-
-    private int currentLane = 2; // Start at the middle lane (index 2)
+    public float explosionLifetime = 1f; // Time in seconds before explosion is destroyed
 
     private Vector2 moveInput;
+    private bool isMoving = false;
     private Rigidbody2D rb;
     private PlayerInput playerInput;
 
@@ -30,51 +30,40 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         playerInput = GetComponent<PlayerInput>();
 
-        playerInput.actions["Move"].performed += OnMove;
+        playerInput.actions["Move"].started += OnMoveStarted;
+        playerInput.actions["Move"].canceled += OnMoveCanceled;
         playerInput.actions["Shoot"].performed += OnFire;
         playerInput.actions["Restart"].performed += OnRestart;
-
-        //make it so the player starts at the correct lane
-        transform.position = new Vector2(transform.position.x, lanePoints[currentLane].position.y);
     }
 
-    public void OnMove(InputAction.CallbackContext context)
+    private void OnMoveStarted(InputAction.CallbackContext context)
     {
-        Vector2 moveInput = context.ReadValue<Vector2>();
-
-        if (moveInput.y > 0)
-        {
-            MoveUp();
-        }
-        else if (moveInput.y < 0)
-        {
-            MoveDown();
-        }
+        moveInput = context.ReadValue<Vector2>();
+        isMoving = true;
+        Debug.Log($"Move Input Started: {moveInput}");
     }
 
-    private void MoveUp()
+    private void OnMoveCanceled(InputAction.CallbackContext context)
     {
-        if (currentLane > 0) // Move up only if not at the top lane
-        {
-            currentLane--;
-            MoveToCurrentLane();
-        }
+        moveInput = Vector2.zero;
+        isMoving = false;
+        Debug.Log($"Move Input Canceled: {moveInput}");
     }
 
-    private void MoveDown()
+    private void FixedUpdate()
     {
-        if (currentLane < lanePoints.Length - 1) // Move down only if not at the bottom lane
+        if (isMoving)
         {
-            currentLane++;
-            MoveToCurrentLane();
-        }
-    }
+            // Player movement
+            Vector2 playerMovement = new Vector2(0f, moveInput.y * moveSpeed * Time.fixedDeltaTime);
+            Vector2 newPosition = rb.position + playerMovement;
 
-    private void MoveToCurrentLane()
-    {
-        // Smoothly move to the target lane
-        Vector2 targetPosition = new Vector2(transform.position.x, lanePoints[currentLane].position.y);
-        transform.position = Vector2.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
+            // Ensure player stays within vertical boundary
+            float clampedY = Mathf.Clamp(newPosition.y, boundaryYCenter - boundaryY, boundaryYCenter + boundaryY);
+            newPosition.y = clampedY;
+
+            rb.MovePosition(newPosition);
+        }
     }
 
     public void OnFire(InputAction.CallbackContext context)
@@ -94,17 +83,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void FixedUpdate()
-    {
-        Vector2 movement = moveInput * moveSpeed * Time.fixedDeltaTime;
-        rb.MovePosition(rb.position + movement);
-
-        // Restrict player to boundaries and snap to grid points
-        float clampedY = Mathf.Clamp(rb.position.y, -boundaryY, boundaryY);
-        clampedY = Mathf.Round(clampedY); // Snap to grid points
-        rb.position = new Vector2(rb.position.x, clampedY);
-    }
-
     void Shoot()
     {
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
@@ -113,7 +91,8 @@ public class PlayerController : MonoBehaviour
 
         if (explosionPrefab != null)
         {
-            Instantiate(explosionPrefab, firePoint.position, Quaternion.identity);
+            GameObject explosion = Instantiate(explosionPrefab, firePoint.position, Quaternion.identity);
+            Destroy(explosion, explosionLifetime); // Destroy the explosion
         }
     }
 

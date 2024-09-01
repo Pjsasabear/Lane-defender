@@ -113,6 +113,17 @@
                 },
                 {
                     "name": "",
+                    "id": "70cb0ace-d20b-4441-9271-907300cd04e8",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Shoot",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "4ba72b92-2cfb-43f9-8d51-0fcfae688031",
                     "path": "<Keyboard>/r",
                     "interactions": "",
