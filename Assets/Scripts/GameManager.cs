@@ -80,11 +80,8 @@ public class GameManager : MonoBehaviour
             Instantiate(enemyPrefab, GetRandomSpawnPosition(), Quaternion.identity);
             audioSource.PlayOneShot(spawnSound); // Play spawn sound
 
-            // Wait for the current interval before spawning the next enemy
-            yield return new WaitForSeconds(currentEnemySpawnInterval);
-
-            // Decrease the spawn interval to increase the spawn rate
-            currentEnemySpawnInterval = Mathf.Max(minimumSpawnInterval, currentEnemySpawnInterval * spawnRateIncreaseFactor);
+            // Wait for the fixed interval before spawning the next enemy
+            yield return new WaitForSeconds(initialEnemySpawnInterval);
         }
     }
 
