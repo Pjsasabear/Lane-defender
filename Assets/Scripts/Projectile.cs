@@ -16,7 +16,8 @@ public class Bullet : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Enemy"))
         {
-            Destroy(gameObject); // Destroy the projectile on collision
+            // Damage handling and bullet destruction is managed in the Enemy script now.
+            Destroy(gameObject); // Destroy the bullet on collision
         }
     }
 

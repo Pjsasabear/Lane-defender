@@ -155,9 +155,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 1
   health: 3
+  scoreValue: 100
   explosionEffect: {fileID: 1461483890964668967, guid: 63a3f5ad5a105a24dbbd3aacd97935f5, type: 3}
   endPoint: {fileID: 0}
-  spawnPoints: []
+  explosionLifetime: 1
+  animator: {fileID: 1591951321500249532}
 --- !u!50 &-165783842172571337
 Rigidbody2D:
   serializedVersion: 4

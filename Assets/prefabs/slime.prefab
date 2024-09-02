@@ -76,14 +76,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 2
   health: 2
+  scoreValue: 50
   explosionEffect: {fileID: 1461483890964668967, guid: 63a3f5ad5a105a24dbbd3aacd97935f5, type: 3}
   endPoint: {fileID: 0}
-  spawnPoints:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  explosionLifetime: 1
+  animator: {fileID: 1961397136023957869}
 --- !u!60 &-3458879127228539960
 PolygonCollider2D:
   m_ObjectHideFlags: 0

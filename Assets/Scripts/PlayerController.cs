@@ -9,26 +9,28 @@ public class PlayerController : MonoBehaviour
     // Player fires a bullet
     // When player fires a bullet, generate explosion on the barrel
     // Gun firing delay
-    public float moveSpeed = 5f; // Speed the player moves
-    public float boundaryY = 4.5f; // Vertical boundary offset from the center
-    public float boundaryYCenter = 0f; // Center of the vertical boundary
+    public float moveSpeed = 5f;
+    public float boundaryY = 4.5f;
+    public float boundaryYCenter = 0f;
     public GameObject bulletPrefab;
     public Transform firePoint;
     public GameObject explosionPrefab;
     public float bulletForce = 10f;
     public float fireRate = 0.2f;
     private float nextFireTime = 0f;
-    public float explosionLifetime = 1f; // Time in seconds before explosion is destroyed
+    public float explosionLifetime = 1f;
 
     private Vector2 moveInput;
     private bool isMoving = false;
     private Rigidbody2D rb;
     private PlayerInput playerInput;
+    private GameManager gameManager;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         playerInput = GetComponent<PlayerInput>();
+        gameManager = FindObjectOfType<GameManager>();
 
         playerInput.actions["Move"].started += OnMoveStarted;
         playerInput.actions["Move"].canceled += OnMoveCanceled;
@@ -54,11 +56,9 @@ public class PlayerController : MonoBehaviour
     {
         if (isMoving)
         {
-            // Player movement
             Vector2 playerMovement = new Vector2(0f, moveInput.y * moveSpeed * Time.fixedDeltaTime);
             Vector2 newPosition = rb.position + playerMovement;
 
-            // Ensure player stays within vertical boundary
             float clampedY = Mathf.Clamp(newPosition.y, boundaryYCenter - boundaryY, boundaryYCenter + boundaryY);
             newPosition.y = clampedY;
 
@@ -79,7 +79,7 @@ public class PlayerController : MonoBehaviour
     {
         if (context.performed)
         {
-            RestartGame();
+            gameManager.RestartGame();
         }
     }
 
@@ -92,12 +92,29 @@ public class PlayerController : MonoBehaviour
         if (explosionPrefab != null)
         {
             GameObject explosion = Instantiate(explosionPrefab, firePoint.position, Quaternion.identity);
-            Destroy(explosion, explosionLifetime); // Destroy the explosion
+            Destroy(explosion, explosionLifetime);
+        }
+
+        if (gameManager != null)
+        {
+            gameManager.audioSource.PlayOneShot(gameManager.tankShootSound); // Play tank shoot sound
         }
     }
 
-    void RestartGame()
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            TakeDamage(1);
+            Destroy(collision.gameObject);
+        }
+    }
+
+    private void TakeDamage(int damage)
+    {
+        if (gameManager != null)
+        {
+            gameManager.TakeDamage(damage);
+        }
     }
 }

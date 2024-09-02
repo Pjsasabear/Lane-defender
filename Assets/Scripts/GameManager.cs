@@ -16,12 +16,19 @@ public class GameManager : MonoBehaviour
     public int totalLives = 3; // Starting number of lives
     public GameObject[] enemyPrefabs; // Array of enemies for spawning
     public Transform[] spawnPoints; // Array of spawn points for enemies
-    public float enemySpawnInterval = 2.0f; // Time between the enemy spawning
+    public float initialEnemySpawnInterval = 2.0f; // Initial time between the enemy spawning
+    public float spawnRateIncreaseFactor = 0.95f; // Factor by which the spawn interval decreases
+    public float minimumSpawnInterval = 0.5f; // Minimum cap for the spawn interval
     public TMP_Text scoreText; // UI to display the score
     public TMP_Text livesText; // UI text element to display remaining lives
     public AudioSource audioSource; // AudioSource for playing sounds
-    public AudioClip gameOverSound; // Sound to play when game is over
+    public AudioClip gameOverSound; // Sound to play when the game is over
     public AudioClip spawnSound; // Sound to play when an enemy spawns
+    public AudioClip playerHitSound; // Sound for player hit
+    public AudioClip enemyHitSound; // Sound for enemy hit
+    public AudioClip enemyDeathSound; // Sound for enemy death
+    public AudioClip tankShootSound; // Sound for tank shooting
+    public AudioClip backgroundMusic; // Background music to play continuously
     public TMP_Text highScoreText; // UI text element to display high score
 
     private int score = 0; // Player's current score
@@ -29,7 +36,7 @@ public class GameManager : MonoBehaviour
     private int highScore; // High score
     private string saveFilePath; // File path for saving high score data
     private bool isGameActive = true;
-
+    private float currentEnemySpawnInterval;
 
     private void Start()
     {
@@ -38,10 +45,21 @@ public class GameManager : MonoBehaviour
         saveFilePath = Path.Combine(Application.persistentDataPath, "highscore.txt");
         LoadHighScore();
 
+        // Initialize the spawn interval
+        currentEnemySpawnInterval = initialEnemySpawnInterval;
+
         // Update UI
         UpdateScoreText();
         UpdateLivesText();
         UpdateHighScoreText();
+
+        // Play background music
+        if (audioSource != null && backgroundMusic != null)
+        {
+            audioSource.clip = backgroundMusic;
+            audioSource.loop = true; // Ensure the background music loops
+            audioSource.Play(); // Start playing the background music
+        }
 
         // Start spawning enemies
         StartCoroutine(SpawnEnemies());
@@ -52,15 +70,21 @@ public class GameManager : MonoBehaviour
 
     }
 
-    // enemy spawning
+    // Enemy spawning
     private IEnumerator SpawnEnemies()
     {
         while (isGameActive)
         {
+            // Spawn an enemy
             GameObject enemyPrefab = GetRandomEnemyPrefab();
             Instantiate(enemyPrefab, GetRandomSpawnPosition(), Quaternion.identity);
-            audioSource.PlayOneShot(spawnSound);
-            yield return new WaitForSeconds(enemySpawnInterval);
+            audioSource.PlayOneShot(spawnSound); // Play spawn sound
+
+            // Wait for the current interval before spawning the next enemy
+            yield return new WaitForSeconds(currentEnemySpawnInterval);
+
+            // Decrease the spawn interval to increase the spawn rate
+            currentEnemySpawnInterval = Mathf.Max(minimumSpawnInterval, currentEnemySpawnInterval * spawnRateIncreaseFactor);
         }
     }
 
@@ -82,7 +106,7 @@ public class GameManager : MonoBehaviour
     }
 
     // Restart the game
-    private void RestartGame()
+    public void RestartGame()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
@@ -92,6 +116,7 @@ public class GameManager : MonoBehaviour
     {
         lives -= damage;
         UpdateLivesText();
+        audioSource.PlayOneShot(playerHitSound); // Play player hit sound
 
         if (lives <= 0)
         {
